@@ -91,10 +91,10 @@ SECTIONS
 	}
 
     GROUP_START(ROMABLE_REGION)
-    _image_rom_start = .;
 
     SECTION_PROLOGUE(_VECTOR_SECTION_NAME,,)
     {
+		_image_rom_start = .;
 		. = ALIGN(4);
 		KEEP(*(.vectors.*))
     } GROUP_LINK_IN(ROMABLE_REGION)
