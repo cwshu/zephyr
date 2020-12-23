@@ -11,5 +11,7 @@ config SOC_QEMU_RV32_VIRT
 	bool "QEMU RV32 virt SOC implementation"
 	select ATOMIC_OPERATIONS_C if !SMP
 	select ATOMIC_OPERATIONS_BUILTIN if SMP
+	select ARCH_HAS_USERSPACE if RISCV_PMP
+	select ARCH_HAS_STACK_PROTECTION if PMP_STACK_GUARD
 
 endchoice
