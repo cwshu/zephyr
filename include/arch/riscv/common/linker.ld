@@ -154,7 +154,14 @@ SECTIONS
 	MPU_ALIGN(_image_rodata_end - _image_rom_start);
 	_image_rom_end = .;
 	_image_rom_size = _image_rom_end - _image_rom_start;
-    GROUP_END(ROMABLE_REGION)
+
+#if defined(CONFIG_RISCV_PMP) && !defined(CONFIG_XIP)
+	SECTION_PROLOGUE(rom_pmp_padding,,)
+	{
+		. = . + (_image_rom_end - _image_rodata_end);
+	} GROUP_LINK_IN(ROMABLE_REGION)
+#endif /* defined(CONFIG_RISCV_PMP) && !defined(CONFIG_XIP) */
+	GROUP_END(ROMABLE_REGION)
 
     GROUP_START(RAMABLE_REGION)
 
