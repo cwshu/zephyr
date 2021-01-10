@@ -146,10 +146,57 @@ void csr_write_enum(int pmp_csr_enum, ulong_t value)
 	}
 }
 
+void csr_set_enum(int pmp_csr_enum, ulong_t value)
+{
+	switch (pmp_csr_enum) {
+	case CSR_PMPCFG0:
+		csr_set(0x3A0, value); break;
+	case CSR_PMPCFG1:
+		csr_set(0x3A1, value); break;
+	case CSR_PMPCFG2:
+		csr_set(0x3A2, value); break;
+	case CSR_PMPCFG3:
+		csr_set(0x3A3, value); break;
+	case CSR_PMPADDR0:
+		csr_set(0x3B0, value); break;
+	case CSR_PMPADDR1:
+		csr_set(0x3B1, value); break;
+	case CSR_PMPADDR2:
+		csr_set(0x3B2, value); break;
+	case CSR_PMPADDR3:
+		csr_set(0x3B3, value); break;
+	case CSR_PMPADDR4:
+		csr_set(0x3B4, value); break;
+	case CSR_PMPADDR5:
+		csr_set(0x3B5, value); break;
+	case CSR_PMPADDR6:
+		csr_set(0x3B6, value); break;
+	case CSR_PMPADDR7:
+		csr_set(0x3B7, value); break;
+	case CSR_PMPADDR8:
+		csr_set(0x3B8, value); break;
+	case CSR_PMPADDR9:
+		csr_set(0x3B9, value); break;
+	case CSR_PMPADDR10:
+		csr_set(0x3BA, value); break;
+	case CSR_PMPADDR11:
+		csr_set(0x3BB, value); break;
+	case CSR_PMPADDR12:
+		csr_set(0x3BC, value); break;
+	case CSR_PMPADDR13:
+		csr_set(0x3BD, value); break;
+	case CSR_PMPADDR14:
+		csr_set(0x3BE, value); break;
+	case CSR_PMPADDR15:
+		csr_set(0x3BF, value); break;
+	default:
+		break;
+	}
+}
+
 int z_riscv_pmp_set(unsigned int index, ulong_t cfg_val, ulong_t addr_val)
 {
-	ulong_t reg_val;
-	ulong_t shift, mask;
+	ulong_t shift;
 	int pmpcfg_csr;
 	int pmpaddr_csr;
 
@@ -157,7 +204,7 @@ int z_riscv_pmp_set(unsigned int index, ulong_t cfg_val, ulong_t addr_val)
 		return -1;
 	}
 
-	/* Calculate PMP config/addr register, shift and mask */
+	/* Calculate PMP config/addr register, shift */
 #ifdef CONFIG_64BIT
 	pmpcfg_csr = CSR_PMPCFG0 + ((index >> 3) << 1);
 	shift = (index & 0x7) << 3;
@@ -167,22 +214,15 @@ int z_riscv_pmp_set(unsigned int index, ulong_t cfg_val, ulong_t addr_val)
 #endif /* CONFIG_64BIT */
 	pmpaddr_csr = CSR_PMPADDR0 + index;
 
-	/* Mask = 0x000000FF<<((index%4)*8) */
-	mask = 0x000000FF << shift;
-
 	cfg_val = cfg_val << shift;
 	addr_val = TO_PMP_ADDR(addr_val);
 
-	reg_val = csr_read_enum(pmpcfg_csr);
-	reg_val = reg_val & ~mask;
-	reg_val = reg_val | cfg_val;
-
 	csr_write_enum(pmpaddr_csr, addr_val);
-	csr_write_enum(pmpcfg_csr, reg_val);
+	csr_set_enum(pmpcfg_csr, cfg_val);
 	return 0;
 }
 
-int pmp_get(unsigned int index, ulong_t *cfg_val, ulong_t *addr_val)
+static int pmp_get(unsigned int index, ulong_t *cfg_val, ulong_t *addr_val)
 {
 	ulong_t shift;
 	int pmpcfg_csr;
@@ -194,11 +234,11 @@ int pmp_get(unsigned int index, ulong_t *cfg_val, ulong_t *addr_val)
 
 	/* Calculate PMP config/addr register and shift */
 #ifdef CONFIG_64BIT
-	pmpcfg_csr = CSR_PMPCFG0 + (index >> 4);
-	shift = (index & 0x0007) << 3;
+	pmpcfg_csr = CSR_PMPCFG0 + ((index >> 3) << 1);
+	shift = (index & 0x7) << 3;
 #else
 	pmpcfg_csr = CSR_PMPCFG0 + (index >> 2);
-	shift = (index & 0x0003) << 3;
+	shift = (index & 0x3) << 3;
 #endif /* CONFIG_64BIT */
 	pmpaddr_csr = CSR_PMPADDR0 + index;
 
