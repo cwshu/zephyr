@@ -6,12 +6,19 @@
 
 #include <kernel.h>
 #include <kernel_internal.h>
+#include <device.h>
+#include <init.h>
 #include <sys/__assert.h>
 #include "core_pmp.h"
 #include <arch/riscv/csr.h>
+#include <linker/linker-defs.h>
 #include <stdio.h>
 
-#define PMP_SLOT_NUMBER	CONFIG_PMP_SLOT
+#if defined(CONFIG_PMP_POWER_OF_TWO_ALIGNMENT)
+#define PMP_SLOT_NUMBER	(CONFIG_PMP_SLOT - 1)
+#else /* CONFIG_PMP_POWER_OF_TWO_ALIGNMENT */
+#define PMP_SLOT_NUMBER	(CONFIG_PMP_SLOT - 2)
+#endif /* CONFIG_PMP_POWER_OF_TWO_ALIGNMENT */
 
 #ifdef CONFIG_USERSPACE
 extern ulong_t is_user_mode;
@@ -146,7 +153,7 @@ int z_riscv_pmp_set(unsigned int index, ulong_t cfg_val, ulong_t addr_val)
 	int pmpcfg_csr;
 	int pmpaddr_csr;
 
-	if ((index >= PMP_SLOT_NUMBER) | (index < 0)) {
+	if ((index >= CONFIG_PMP_SLOT) | (index < 0)) {
 		return -1;
 	}
 
@@ -181,7 +188,7 @@ int pmp_get(unsigned int index, ulong_t *cfg_val, ulong_t *addr_val)
 	int pmpcfg_csr;
 	int pmpaddr_csr;
 
-	if ((index >= PMP_SLOT_NUMBER) | (index < 0)) {
+	if ((index >= CONFIG_PMP_SLOT) | (index < 0)) {
 		return -1;
 	}
 
@@ -203,7 +210,7 @@ int pmp_get(unsigned int index, ulong_t *cfg_val, ulong_t *addr_val)
 
 void z_riscv_pmp_clear_config(void)
 {
-	for (unsigned int i = 0; i < RISCV_PMP_CFG_NUM; i++)
+	for (unsigned int i = 0; i < (RISCV_PMP_CFG_NUM - 1); i++)
 		csr_write_enum(CSR_PMPCFG0 + i, 0);
 }
 
@@ -224,17 +231,10 @@ void z_riscv_pmp_print(unsigned int index)
 }
 
 #if defined(CONFIG_USERSPACE)
-#include <linker/linker-defs.h>
 void z_riscv_init_user_accesses(struct k_thread *thread)
 {
 	unsigned char index;
 	unsigned char *uchar_pmpcfg;
-	ulong_t rom_start = (ulong_t) _image_rom_start;
-#if defined(CONFIG_PMP_POWER_OF_TWO_ALIGNMENT)
-	ulong_t rom_size = (ulong_t) _image_rom_size;
-#else /* CONFIG_PMP_POWER_OF_TWO_ALIGNMENT */
-	ulong_t rom_end = (ulong_t) _image_rom_end;
-#endif /* CONFIG_PMP_POWER_OF_TWO_ALIGNMENT */
 	index = 0;
 	uchar_pmpcfg = (unsigned char *) thread->arch.u_pmpcfg;
 
@@ -246,22 +246,12 @@ void z_riscv_init_user_accesses(struct k_thread *thread)
 	thread->arch.u_pmpaddr[index] = TO_PMP_ADDR((ulong_t) &is_user_mode);
 	uchar_pmpcfg[index++] = PMP_NA4 | PMP_R;
 #if defined(CONFIG_PMP_POWER_OF_TWO_ALIGNMENT)
-	/* Program and RO data */
-	thread->arch.u_pmpaddr[index] = TO_PMP_NAPOT(rom_start, rom_size);
-	uchar_pmpcfg[index++] = PMP_NAPOT | PMP_R | PMP_X;
-
 	/* RAM */
 	thread->arch.u_pmpaddr[index] = TO_PMP_NAPOT(thread->stack_info.start,
 					thread->stack_info.size);
 
 	uchar_pmpcfg[index++] = PMP_NAPOT | PMP_R | PMP_W;
 #else /* CONFIG_PMP_POWER_OF_TWO_ALIGNMENT */
-	/* Program and RO data */
-	thread->arch.u_pmpaddr[index] = TO_PMP_ADDR(rom_start);
-	uchar_pmpcfg[index++] = PMP_NA4 | PMP_R | PMP_X;
-	thread->arch.u_pmpaddr[index] = TO_PMP_ADDR(rom_end);
-	uchar_pmpcfg[index++] = PMP_TOR | PMP_R | PMP_X;
-
 	/* RAM */
 	thread->arch.u_pmpaddr[index] = TO_PMP_ADDR(thread->stack_info.start);
 	uchar_pmpcfg[index++] = PMP_NA4 | PMP_R | PMP_W;
@@ -280,7 +270,7 @@ void z_riscv_configure_user_allowed_stack(struct k_thread *thread)
 	for (i = 0; i < CONFIG_PMP_SLOT; i++)
 		csr_write_enum(CSR_PMPADDR0 + i, thread->arch.u_pmpaddr[i]);
 
-	for (i = 0; i < RISCV_PMP_CFG_NUM; i++)
+	for (i = 0; i < (RISCV_PMP_CFG_NUM - 1); i++)
 		csr_write_enum(CSR_PMPCFG0 + i, thread->arch.u_pmpcfg[i]);
 }
 
@@ -649,3 +639,42 @@ void z_riscv_pmp_init_thread(struct k_thread *thread)
 #endif /* CONFIG_USERSPACE */
 }
 #endif /* CONFIG_PMP_STACK_GUARD || CONFIG_USERSPACE */
+
+int z_riscv_pmp_init(const struct device *arg)
+{
+	ulong_t rom_start = (ulong_t) _image_rom_start;
+#if defined(CONFIG_PMP_POWER_OF_TWO_ALIGNMENT)
+	ulong_t rom_size = (ulong_t) _image_rom_size;
+#else /* CONFIG_PMP_POWER_OF_TWO_ALIGNMENT */
+	ulong_t rom_end = (ulong_t) _image_rom_end;
+#endif /* CONFIG_PMP_POWER_OF_TWO_ALIGNMENT */
+	int index;
+	ulong_t cfg_val, addr_val;
+
+	/* .text and .rodata has RX permission and also affects supervisor mode (M-mode). */
+	ulong_t perm = PMP_R | PMP_X | PMP_L;
+
+#if defined(CONFIG_PMP_POWER_OF_TWO_ALIGNMENT)
+	/* Program and RO data */
+	index = CONFIG_PMP_SLOT - 1;
+	cfg_val = PMP_NAPOT | perm;
+	addr_val = rom_start | TO_NAPOT_RANGE(rom_size);
+	z_riscv_pmp_set(index, cfg_val, addr_val);
+#else /* CONFIG_PMP_POWER_OF_TWO_ALIGNMENT */
+	/* Program and RO data */
+	index = CONFIG_PMP_SLOT - 2;
+	cfg_val = PMP_NA4 | perm;
+	addr_val = rom_start;
+	z_riscv_pmp_set(index, cfg_val, addr_val);
+
+	index = CONFIG_PMP_SLOT - 1;
+	cfg_val = PMP_TOR | perm;
+	addr_val = rom_end;
+	z_riscv_pmp_set(index, cfg_val, addr_val);
+#endif /* CONFIG_PMP_POWER_OF_TWO_ALIGNMENT */
+
+	return 0;
+}
+
+SYS_INIT(z_riscv_pmp_init, PRE_KERNEL_2,
+	 CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
