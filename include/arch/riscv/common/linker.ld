@@ -33,7 +33,7 @@
 
 #ifdef CONFIG_RISCV_PMP
 	#define MPU_MIN_SIZE 4
-	#define MPU_MIN_SIZE_ALIGN . = ALIGN(MPU_MIN_SIZE );
+	#define MPU_MIN_SIZE_ALIGN . = ALIGN(MPU_MIN_SIZE);
 	#if defined(CONFIG_MPU_REQUIRES_POWER_OF_TWO_ALIGNMENT)
 		#define MPU_ALIGN(region_size) \
 			. = ALIGN(MPU_MIN_SIZE); \
@@ -185,7 +185,9 @@ SECTIONS
 		 */
 		 . = ALIGN(4);
 		 __bss_start = .;
+#if !defined(CONFIG_USERSPACE)
 		 _image_ram_start = .;
+#endif /* CONFIG_USERSPACE */
 		__kernel_ram_start = .;
 		 *(.sbss)
 		 *(".sbss.*")
