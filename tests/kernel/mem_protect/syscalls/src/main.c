@@ -220,7 +220,8 @@ void test_string_nlen(void)
 #if !((defined(CONFIG_BOARD_NSIM) && defined(CONFIG_SOC_NSIM_SEM)) || \
 	defined(CONFIG_SOC_EMSK_EM7D) || \
 	(defined(CONFIG_CPU_CORTEX_M) && \
-		defined(CONFIG_TRUSTED_EXECUTION_NONSECURE)))
+		defined(CONFIG_TRUSTED_EXECUTION_NONSECURE)) || \
+	defined(CONFIG_RISCV))
 	/* Try to blow up the kernel */
 	ret = string_nlen((char *)FAULTY_ADDRESS, BUF_SIZE, &err);
 	zassert_equal(err, -1, "nonsense string address did not fault");
