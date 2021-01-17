@@ -210,7 +210,7 @@ void test_string_nlen(void)
 	 * Also skip this scenario for em_starterkit_7d, which won't generate
 	 * exceptions when unmapped address is accessed.
 	 */
-#if !((defined(CONFIG_BOARD_NSIM) && defined(CONFIG_SOC_NSIM_SEM)) || defined(CONFIG_SOC_EMSK_EM7D))
+#if !((defined(CONFIG_BOARD_NSIM) && defined(CONFIG_SOC_NSIM_SEM)) || defined(CONFIG_SOC_EMSK_EM7D) || defined(CONFIG_RISCV))
 	/* Try to blow up the kernel */
 	ret = string_nlen((char *)FAULTY_ADDRESS, BUF_SIZE, &err);
 	zassert_equal(err, -1, "nonsense string address did not fault");

@@ -2,3 +2,9 @@ tests:
   kernel.memory_protection.syscalls:
     filter: CONFIG_ARCH_HAS_USERSPACE
     tags: kernel security userspace ignore_faults
+    platform_exclude: qemu_rv32_virt
+  kernel.memory_protection.syscalls.qemu_rv32_virt:
+    filter: CONFIG_ARCH_HAS_USERSPACE
+    tags: kernel security userspace ignore_faults
+    platform_allow: qemu_rv32_virt
+    timeout: 120
