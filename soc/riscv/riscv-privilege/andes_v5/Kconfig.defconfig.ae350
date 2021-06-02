@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+
+if SOC_RISCV_ANDES_AE350
+
+config SOC
+	string
+	default "ae350"
+
+config MAIN_STACK_SIZE
+	int
+	default 2048
+
+config IDLE_STACK_SIZE
+	int
+	default 1536
+
+config TEST_EXTRA_STACKSIZE
+	int
+	default 1024
+
+endif # SOC_RISCV_ANDES_AE350
