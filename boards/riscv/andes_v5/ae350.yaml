@@ -1,0 +1,17 @@
+identifier: ae350
+name: Andes Technology AE350
+type: mcu
+arch: riscv32
+toolchain:
+  - zephyr
+  - cross-compile
+ram: 512
+supported:
+  - netif:eth
+  - gpio
+  - counter
+  - spi
+  - i2c
+testing:
+  ignore_tags:
+    - bluetooth

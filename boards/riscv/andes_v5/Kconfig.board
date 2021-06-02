@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_AE250
+	bool "Andes AE250 Platform"
+	depends on SOC_RISCV_ANDES_AE250
+
+config BOARD_AE350
+	bool "Andes AE350 Platform"
+	depends on SOC_RISCV_ANDES_AE350
+
+config BOARD_CF1_AE250
+	bool "Andes CF1-AE250 Platform"
+	depends on SOC_RISCV_ANDES_AE250

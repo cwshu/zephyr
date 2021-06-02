@@ -1,0 +1,16 @@
+identifier: ae250
+name: Andes Technology AE250
+type: mcu
+arch: riscv32
+toolchain:
+  - zephyr
+  - cross-compile
+ram: 512
+supported:
+  - gpio
+  - counter
+  - spi
+  - i2c
+testing:
+  ignore_tags:
+    - bluetooth
