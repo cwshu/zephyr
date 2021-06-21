@@ -241,8 +241,6 @@ static int riscv_pmp_set(unsigned int index, ulong_t cfg_val, ulong_t addr_val)
 	mask = 0x000000FF << shift;
 
 	cfg_val = cfg_val << shift;
-	addr_val = addr_val;
-
 	reg_val = csr_read_enum(pmpcfg_csr);
 	reg_val = reg_val & ~mask;
 	reg_val = reg_val | cfg_val;
@@ -309,6 +307,8 @@ static int riscv_pmp_region_set(int index, const struct riscv_pmp_region *region
 }
 #endif /* CONFIG_PMP_STACK_GUARD */
 
+/* Note: this #ifdef is only for avoiding -Wunused-function. */
+#if defined(CONFIG_PMP_STACK_GUARD) || defined(CONFIG_USERSPACE)
 static int riscv_pmp_region_translate(ulong_t pmpcfg[], ulong_t pmpaddr[], int index,
 	const struct riscv_pmp_region *region)
 {
@@ -413,6 +413,7 @@ static int riscv_pmp_regions_translate(ulong_t pmpcfg[], ulong_t pmpaddr[],
 
 	return reg_index;
 }
+#endif /* defined(CONFIG_PMP_STACK_GUARD) || defined(CONFIG_USERSPACE) */
 
 void z_riscv_pmp_clear_config(void)
 {
