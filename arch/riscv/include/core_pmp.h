@@ -109,6 +109,8 @@ void z_riscv_init_stack_guard(struct k_thread *thread);
 void z_riscv_configure_stack_guard(struct k_thread *thread);
 #endif /* CONFIG_PMP_STACK_GUARD */
 
+void z_riscv_configure_static_pmp_regions(void);
+
 #if defined(CONFIG_PMP_STACK_GUARD) || defined(CONFIG_USERSPACE)
 
 /*
